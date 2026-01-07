@@ -135,15 +135,26 @@
                 </div>
             </div>
             @endif
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-2xl p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ __('Take Action') }}</h3>
-                <form method="POST" action="{{ route('approval.process', $purchaseRequest) }}" class="mt-4 space-y-4">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg sm:rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
+                <!-- Header with icon -->
+                <div class="flex items-center gap-2 mb-5">
+                    <div class="p-2 bg-brand-green/10 rounded-lg">
+                        <svg class="w-5 h-5 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ __('Take Action') }}</h3>
+                </div>
+                
+                <form method="POST" action="{{ route('approval.process', $purchaseRequest) }}" class="space-y-5">
                     @csrf
                     
                     @if(auth()->user()->role !== 'procurement')
                     <div>
-                        <x-input-label for="comment" :value="__('Comment (Required if denying/rejecting)')" />
-                        <textarea id="comment" name="comment" rows="3" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></textarea>
+                        <x-input-label for="comment" :value="__('Comment (Required if denying/rejecting)')" class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" />
+                        <textarea id="comment" name="comment" rows="3" 
+                            placeholder="{{ __('Add your comments here...') }}"
+                            class="block w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"></textarea>
                     </div>
                     @endif
 
@@ -215,28 +226,66 @@
                                 </div>
                                 <button type="submit" name="action" value="finance_approve_high" class="w-full justify-center px-4 py-2 bg-brand-blue text-white text-sm font-medium rounded-lg hover:bg-opacity-80">{{ __('Escalate to Manager') }}</button>
                              @else
-                                <div class="mb-4 border border-green-200 bg-green-50 dark:bg-green-900/20 p-3 rounded">
-                                     <p class="text-sm text-green-700 dark:text-green-300 text-center mb-2">{{ __('Low Value. Confirm Cash to finalize.') }}</p>
-                                     <label class="flex justify-center items-center mt-2 cursor-pointer">
-                                        <input type="checkbox" required name="cash_confirmed" class="rounded border-gray-300 text-brand-green shadow-sm focus:ring-brand-green">
-                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('I confirm cash is available.') }}</span>
-                                     </label>
+                                <!-- Low Value: Modern Cash Confirmation Toggle -->
+                                <div class="mb-5 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="p-2 bg-green-100 dark:bg-green-800/50 rounded-lg">
+                                                <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ __('Low Value Purchase') }}</p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Confirm Cash Availability') }}</p>
+                                            </div>
+                                        </div>
+                                        <!-- Modern Toggle Switch -->
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" required name="cash_confirmed" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-green/30 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-green"></div>
+                                        </label>
+                                    </div>
                                 </div>
-                                <button type="submit" name="action" value="finance_approve_low" class="w-full justify-center px-4 py-2 bg-brand-green text-white text-sm font-medium rounded-lg hover:bg-opacity-80">{{ __('Approve & Ready to Buy') }}</button>
+                                
+                                <!-- Primary Approve Button -->
+                                <button type="submit" name="action" value="finance_approve_low" 
+                                    class="w-full flex items-center justify-center gap-2 px-5 py-3 bg-brand-green border border-transparent text-white text-sm font-semibold rounded-xl hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    {{ __('Approve & Ready to Buy') }}
+                                </button>
                              @endif
 
-                             <div class="grid grid-cols-2 gap-2 mt-3">
-                                <button type="submit" name="action" value="reject_quote" class="justify-center px-4 py-2 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600" onclick="return confirm('{{ __('Reject quote and send back to Procurement?') }}');">{{ __('Reject Quote') }}</button>
-                                <button type="submit" name="action" value="deny" class="justify-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700" onclick="return confirm('{{ __('Cancel entire request?') }}');">{{ __('Reject Request') }}</button>
+                             <!-- Ghost-style Reject Buttons -->
+                             <div class="grid grid-cols-2 gap-3 mt-4">
+                                <button type="submit" name="action" value="reject_quote" 
+                                    class="flex items-center justify-center gap-2 px-4 py-2.5 bg-transparent border-2 border-amber-400 text-amber-600 dark:text-amber-400 text-sm font-semibold rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 focus:outline-none focus:ring-4 focus:ring-amber-400/30 transition-all duration-200" 
+                                    onclick="return confirm('{{ __('Reject quote and send back to Procurement?') }}');">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                    {{ __('Reject Quote') }}
+                                </button>
+                                <button type="submit" name="action" value="deny" 
+                                    class="flex items-center justify-center gap-2 px-4 py-2.5 bg-transparent border-2 border-red-400 text-red-600 dark:text-red-400 text-sm font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-4 focus:ring-red-400/30 transition-all duration-200" 
+                                    onclick="return confirm('{{ __('Cancel entire request?') }}');">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                    {{ __('Reject Request') }}
+                                </button>
                              </div>
 
                         {{-- Manager Actions --}}
                         @elseif(in_array($purchaseRequest->status, ['Pending Manager', 'Pending Manager Approval']) && (auth()->user()->role === 'manager' || auth()->user()->role === 'admin'))
-                             <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded">
-                                <p class="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">{{ __('Select Final Offer:') }}</p>
+                             <!-- Modern Offer Selection Panel -->
+                             <div class="mb-5 p-4 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl">
+                                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">{{ __('Select Final Offer:') }}</p>
                                 <div class="space-y-2 max-h-64 overflow-y-auto">
                                     @foreach($purchaseRequest->offers as $offer)
-                                        <label class="flex items-center space-x-3 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600 cursor-pointer">
+                                        <label class="flex items-center space-x-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 cursor-pointer hover:border-brand-green hover:bg-green-50/50 dark:hover:bg-green-900/20 transition-all duration-200">
                                             <input type="radio" name="manager_selected_offer_id" value="{{ $offer->id }}" {{ $offer->is_finance_recommended ? 'checked' : ($offer->is_procurement_recommended && !$financeOffer ? 'checked' : '') }} class="form-radio h-4 w-4 text-brand-green border-gray-300 focus:ring-brand-green">
                                             <div class="text-sm flex-1 grid grid-cols-1 sm:grid-cols-2 gap-1">
                                                 <div>
@@ -244,20 +293,44 @@
                                                     <div class="text-gray-500 dark:text-gray-400">{{ number_format($offer->price, 2) }} {{ $offer->currency }}</div>
                                                 </div>
                                                 <div class="flex items-center space-x-1">
-                                                    @if($offer->is_procurement_recommended) <span class="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">Procurement</span> @endif
-                                                    @if($offer->is_finance_recommended) <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">Finance</span> @endif
+                                                    @if($offer->is_procurement_recommended) <span class="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">Procurement</span> @endif
+                                                    @if($offer->is_finance_recommended) <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Finance</span> @endif
                                                 </div>
                                             </div>
                                         </label>
                                     @endforeach
                                 </div>
-                                <textarea name="manager_reason" placeholder="Final approval notes..." rows="2" class="w-full mt-3 text-sm rounded border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 focus:ring-brand-green focus:border-brand-green"></textarea>
+                                <textarea name="manager_reason" placeholder="{{ __('Final approval notes...') }}" rows="2" 
+                                    class="w-full mt-4 text-sm rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green transition-all duration-200 placeholder-gray-400"></textarea>
                              </div>
-                             <button type="submit" name="action" value="manager_approve" class="w-full justify-center px-4 py-2 bg-brand-green text-white text-sm font-medium rounded-lg hover:bg-opacity-80">{{ __('Final Approve') }}</button>
                              
-                             <div class="grid grid-cols-2 gap-2 mt-3">
-                                <button type="submit" name="action" value="reject_quote" class="justify-center px-4 py-2 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600" onclick="return confirm('{{ __('Reject quote?') }}');">{{ __('Reject Quote') }}</button>
-                                <button type="submit" name="action" value="deny" class="justify-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700" onclick="return confirm('{{ __('Cancel request?') }}');">{{ __('Reject Request') }}</button>
+                             <!-- Primary Final Approve Button -->
+                             <button type="submit" name="action" value="manager_approve" 
+                                class="w-full flex items-center justify-center gap-2 px-5 py-3 bg-brand-green border border-transparent text-white text-sm font-semibold rounded-xl hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                {{ __('Final Approve') }}
+                             </button>
+                             
+                             <!-- Ghost-style Reject Buttons -->
+                             <div class="grid grid-cols-2 gap-3 mt-4">
+                                <button type="submit" name="action" value="reject_quote" 
+                                    class="flex items-center justify-center gap-2 px-4 py-2.5 bg-transparent border-2 border-amber-400 text-amber-600 dark:text-amber-400 text-sm font-semibold rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 focus:outline-none focus:ring-4 focus:ring-amber-400/30 transition-all duration-200" 
+                                    onclick="return confirm('{{ __('Reject quote?') }}');">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                    {{ __('Reject Quote') }}
+                                </button>
+                                <button type="submit" name="action" value="deny" 
+                                    class="flex items-center justify-center gap-2 px-4 py-2.5 bg-transparent border-2 border-red-400 text-red-600 dark:text-red-400 text-sm font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-4 focus:ring-red-400/30 transition-all duration-200" 
+                                    onclick="return confirm('{{ __('Cancel request?') }}');">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                    {{ __('Reject Request') }}
+                                </button>
                              </div>
 
                         {{-- Fallback / Stock / Ready to Buy / Admin Override --}}

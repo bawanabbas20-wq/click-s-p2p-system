@@ -19,10 +19,10 @@
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
-        <!-- Arabic/Kurdish Font -->
+        <!-- Arabic/Kurdish Font - Tajawal (Modern, Bold) -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
         <script>
@@ -41,9 +41,9 @@
                 --brand-primary: {{ $siteSettings['primary_color'] ?? '#65C34A' }};
                 --brand-secondary: {{ $siteSettings['secondary_color'] ?? '#1F6BFF' }};
             }
-            /* RTL Font Family */
+            /* RTL Font Family - Tajawal for better readability */
             html[dir="rtl"] {
-                font-family: 'Cairo', 'Inter', sans-serif;
+                font-family: 'Tajawal', 'Inter', sans-serif;
             }
             html[dir="ltr"] {
                 font-family: 'Inter', sans-serif;

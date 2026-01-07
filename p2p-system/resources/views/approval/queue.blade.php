@@ -101,25 +101,25 @@
                                             };
                                         @endphp
 
-                                        <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider">
+                                        <th scope="col" class="px-4 py-2.5 text-start text-xs font-medium uppercase tracking-wider">
                                             {{ __('Requested By') }}
                                         </th>
-                                        <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider">
+                                        <th scope="col" class="px-4 py-2.5 text-start text-xs font-medium uppercase tracking-wider">
                                             {!! $sortLink('item_name', __('Item Name')) !!}
                                         </th>
-                                        <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider">
+                                        <th scope="col" class="px-4 py-2.5 text-start text-xs font-medium uppercase tracking-wider">
                                             {!! $sortLink('estimated_price', __('Est. Price')) !!}
                                         </th>
-                                        <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider">
+                                        <th scope="col" class="px-4 py-2.5 text-start text-xs font-medium uppercase tracking-wider">
                                             {!! $sortLink('created_at', __('Date Requested')) !!}
                                         </th>
-                                        <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider">
+                                        <th scope="col" class="px-4 py-2.5 text-start text-xs font-medium uppercase tracking-wider">
                                             {!! $sortLink('priority', __('Priority')) !!}
                                         </th>
-                                        <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider">
+                                        <th scope="col" class="px-4 py-2.5 text-start text-xs font-medium uppercase tracking-wider">
                                             {!! $sortLink('status', __('Status')) !!}
                                         </th>
-                                        <th scope="col" class="relative px-4 py-2.5 text-right">
+                                        <th scope="col" class="relative px-4 py-2.5 text-end">
                                             <span class="sr-only">Actions</span>
                                         </th>
                                     </tr>
@@ -143,7 +143,7 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                 <x-status-badge :status="$request->status" />
                                             </td>
-                                            <td class="px-6 py-4 text-right text-sm font-medium">
+                                            <td class="px-6 py-4 text-end text-sm font-medium">
                                                 <a href="{{ route('approval.show', $request) }}" class="text-brand-green hover:text-opacity-80 font-semibold">{{ __('View') }}</a>
                                             </td>
                                         </tr>
