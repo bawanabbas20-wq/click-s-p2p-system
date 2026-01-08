@@ -113,31 +113,16 @@ class ApprovalController extends Controller
     public function show(PurchaseRequest $purchaseRequest)
     {
         // Make sure the user is authorized to see this.
-        // This logic checks if the request's status matches what the user is allowed to approve.
+        // Approvers can view ANY request for historical/audit purposes
         $user = Auth::user();
 
-        $canView = false;
-        switch ($user->role) {
-            case 'procurement':
-                $canView = in_array($purchaseRequest->status, ['Pending Procurement', 'Fulfilled from Stock']);
-                break;
-            case 'finance':
-                $canView = in_array($purchaseRequest->status, ['Pending Finance', 'Pending Final Payment', 'Pending Final Approval']);
-                break;
-            case 'manager':
-                $canView = in_array($purchaseRequest->status, ['Pending Manager', 'Pending Manager Approval']);
-                break;
-            case 'admin':
-                $canView = in_array($purchaseRequest->status, [
-                    'Pending Procurement', 'Pending Finance', 'Pending Manager', 'Pending Manager Approval',
-                    'Pending Final Payment', 'Pending Final Approval'
-                ]);
-                break;
-        }
+        // All approvers (procurement, finance, manager, admin) can view any request
+        // This allows viewing history for auditing and reference
+        $canView = in_array($user->role, ['procurement', 'finance', 'manager', 'admin']);
         
         if (!$canView) {
             return redirect()->route('approval.queue')
-                ->with('info', __('This request is not available for your review. It may have been processed already or is not at the correct approval stage.'));
+                ->with('info', __('This request is not available for your review.'));
         }
         
         // Eager load all history immediately so we can use chosenOffer for budget calc
@@ -243,6 +228,23 @@ class ApprovalController extends Controller
 
                     } elseif ($action === 'finance_approve_low') {
                         // Low Value: Confirm Cash -> Ready to Buy
+
+                        // Security Check: Ensure there is at least one offer recommended or chosen
+                        $hasOffer = \App\Models\Offer::where('purchase_request_id', $purchaseRequest->id)
+                            ->where(function($q) {
+                                $q->where('is_procurement_recommended', true)
+                                  ->orWhere('is_chosen', true);
+                            })->exists();
+
+                        // Fallback: If no specific recommendation, just ensure ANY offer exists if we are approving based on "Low Value"
+                        if (!$hasOffer) {
+                            $hasOffer = $purchaseRequest->offers()->exists();
+                        }
+
+                        if (!$hasOffer) {
+                            return back()->with('error', __('Cannot approve. No offers have been selected or recommended.'));
+                        }
+
                         $newStatus = 'Ready to Buy';
                         $procurementUsers = User::where('role', 'procurement')->get();
                         Notification::send($procurementUsers, new NewRequestForApprovalNotification($purchaseRequest, __('Cash Ready - Ready to Buy')));

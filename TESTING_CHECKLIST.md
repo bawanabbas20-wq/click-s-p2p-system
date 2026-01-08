@@ -8,34 +8,34 @@ A comprehensive testing checklist for the Click P2P Procurement System.
 
 ### Login/Logout
 
-- [ ] User can log in with valid credentials
-- [ ] Invalid credentials show error message
-- [ ] User can log out successfully
-- [ ] Session persists after page refresh
-- [ ] Remember me functionality works
+- [X] User can log in with valid credentials
+- [X] Invalid credentials show error message
+- [X] User can log out successfully
+- [X] Session persists after page refresh
+- [X] Remember me functionality works
 
 ### Role-Based Access
 
-- [ ] Employee cannot access admin routes
-- [ ] Employee cannot access approval queue
-- [ ] Procurement can access offers management
-- [ ] Finance can access finance review pages
-- [ ] Manager can access manager review pages
-- [ ] Admin can access all pages
-- [ ] Admin can access user management
-- [ ] Admin can access settings
+- [X] Employee cannot access admin routes
+- [X] Employee cannot access approval queue
+- [X] Procurement can access offers management
+- [X] Finance can access finance review pages
+- [X] Manager can access manager review pages
+- [X] Admin can access all pages
+- [X] Admin can access user management
+- [X] Admin can access settings
 
 ---
 
 ## 👤 User Management (Admin Only)
 
-- [ ] Admin can view list of all users
-- [ ] Admin can create new user with any role
-- [ ] Admin can edit existing user
-- [ ] Admin can change user's role
-- [ ] Admin cannot delete their own account
-- [ ] User avatar upload works
-- [ ] User profile update works
+- [X] Admin can view list of all users
+- [X] Admin can create new user with any role
+- [X] Admin can edit existing user
+- [X] Admin can change user's role
+- [X] Admin cannot delete their own account
+- [X] User avatar upload works
+- [X] User profile update works
 
 ---
 
@@ -43,97 +43,97 @@ A comprehensive testing checklist for the Click P2P Procurement System.
 
 ### Employee Actions
 
-- [ ] Employee can create new purchase request
-- [ ] Required fields are validated (item name, price, date, justification)
-- [ ] Employee can select currency (IQD/USD)
-- [ ] Employee can set priority (Low/Medium/High)
-- [ ] Employee can view their own requests on dashboard
-- [ ] Employee receives notification when request is approved
-- [ ] Employee receives notification when request is denied
-- [ ] Employee cannot see other employees' requests
+- [X] Employee can create new purchase request
+- [X] Required fields are validated (item name, price, date, justification)
+- [X] Employee can select currency (IQD/USD)
+- [X] Employee can set priority (Low/Medium/High)
+- [X] Employee can view their own requests on dashboard
+- [X] Employee receives notification when request is approved
+- [X] Employee receives notification when request is denied
+- [X] Employee cannot see other employees' requests
 
 ### Status: Pending Procurement
 
-- [ ] Request appears in Procurement's queue
-- [ ] Procurement can "Request Quotations" (escalate)
-- [ ] Procurement can "Fulfill from Stock" (complete immediately)
-- [ ] Procurement can see request details
+- [X] Request appears in Procurement's queue
+- [X] Procurement can "Request Quotations" (escalate)
+- [X] Procurement can "Fulfill from Stock" (complete immediately)
+- [X] Procurement can see request details
 
 ### Status: Needs Quotations
 
-- [ ] Request appears in "Needs Quotations" list
-- [ ] Procurement can add offers/quotations
-- [ ] Offers require vendor name and price
-- [ ] File attachment works for quotations
-- [ ] Procurement can select recommended offer
-- [ ] Procurement must provide reason for recommendation
-- [ ] Multiple offers can be added per request
+- [X] Request appears in "Needs Quotations" list
+- [X] Procurement can add offers/quotations
+- [X] Offers require vendor name and price
+- [X] File attachment works for quotations
+- [X] Procurement can select recommended offer
+- [X] Procurement must provide reason for recommendation
+- [X] Multiple offers can be added per request
 
 ### Status: Pending Finance
 
-- [ ] Request appears in Finance's approval queue
-- [ ] **Low Value (<100k IQD):** Finance sees toggle to confirm cash
-- [ ] **Low Value:** Finance can approve directly → Ready to Buy
-- [ ] **High Value (≥100k IQD):** Finance sees all offers
-- [ ] **High Value:** Finance can select different offer
-- [ ] **High Value:** Finance must escalate to Manager
-- [ ] Finance can reject quote (sends back to Procurement)
-- [ ] Finance can reject request (cancels entirely)
+- [X] Request appears in Finance's approval queue
+- [X] **Low Value (<100k IQD):** Finance sees toggle to confirm cash
+- [X] **Low Value:** Finance can approve directly → Ready to Buy
+- [X] **High Value (≥100k IQD):** Finance sees all offers
+- [X] **High Value:** Finance can select different offer
+- [X] **High Value:** Finance must escalate to Manager
+- [X] Finance can reject quote (sends back to Procurement)
+- [X] Finance can reject request (cancels entirely)
 
 ### Status: Pending Manager
 
-- [ ] Request appears in Manager's approval queue
-- [ ] Manager sees Procurement recommendation
-- [ ] Manager sees Finance recommendation
-- [ ] Manager can select final offer
-- [ ] Manager can add approval notes
-- [ ] Manager can approve → Ready to Buy
-- [ ] Manager can reject quote
-- [ ] Manager can reject request
+- [X] Request appears in Manager's approval queue
+- [X] Manager sees Procurement recommendation
+- [X] Manager sees Finance recommendation
+- [X] Manager can select final offer
+- [X] Manager can add approval notes
+- [X] Manager can approve → Ready to Buy
+- [X] Manager can reject quote
+- [X] Manager can reject request
 
 ### Status: Ready to Buy / Cash Ready
 
-- [ ] Request appears in "Ready to Buy" list
-- [ ] Procurement can print Purchase Order (PO)
-- [ ] Procurement can "Log Purchase" to complete
-- [ ] Employee is notified when purchase is completed
+- [X] Request appears in "Ready to Buy" list
+- [X] Procurement can print Purchase Order (PO)
+- [X] Procurement can "Log Purchase" to complete
+- [X] Employee is notified when purchase is completed
 
 ---
 
 ## 💰 Budget Management
 
-- [ ] Finance/Admin can view current month's budget
-- [ ] Budget displays IQD and USD separately
-- [ ] Budget shows spent vs remaining
-- [ ] New budget can be created for future months
-- [ ] Budget history is visible
-- [ ] Approvers see budget impact when reviewing requests
+- [X] Finance/Admin can view current month's budget
+- [X] Budget displays IQD and USD separately
+- [X] Budget shows spent vs remaining
+- [X] New budget can be created for future months
+- [X] Budget history is visible
+- [X] Approvers see budget impact when reviewing requests
 
 ---
 
 ## 📊 Analytics Dashboard
 
-- [ ] Analytics shows budget utilization percentage
-- [ ] Analytics shows average processing time
-- [ ] Analytics shows success rate
-- [ ] Budget vs Actual chart displays correctly
-- [ ] Currency toggle (IQD/USD) works on chart
-- [ ] Processing time analysis chart works
-- [ ] Cost savings analysis chart works
-- [ ] Employee activity table shows all users
-- [ ] Clicking employee name shows their purchase history
-- [ ] Recent purchase request history displays correctly
+- [X] Analytics shows budget utilization percentage
+- [X] Analytics shows average processing time
+- [X] Analytics shows success rate
+- [X] Budget vs Actual chart displays correctly
+- [X] Currency toggle (IQD/USD) works on chart
+- [X] Processing time analysis chart works
+- [X] Cost savings analysis chart works
+- [X] Employee activity table shows all users
+- [X] Clicking employee name shows their purchase history
+- [X] Recent purchase request history displays correctly
 
 ---
 
 ## 🏢 Vendor Management
 
-- [ ] Admin/Procurement can view vendor list
-- [ ] Vendor can be created with name, email, phone, address
-- [ ] Vendor can be edited
-- [ ] Vendor can be deleted
-- [ ] Vendor list supports search
-- [ ] Vendor list supports pagination
+- [X] Admin/Procurement can view vendor list
+- [X] Vendor can be created with name, email, phone, address
+- [X] Vendor can be edited
+- [X] Vendor can be deleted
+- [X] Vendor list supports search
+- [X] Vendor list supports pagination
 
 ---
 
@@ -141,19 +141,17 @@ A comprehensive testing checklist for the Click P2P Procurement System.
 
 ### Branding
 
-- [ ] Company name can be changed
-- [ ] Company logo can be uploaded
-- [ ] Primary color can be changed
-- [ ] Secondary color can be changed
-- [ ] Changes reflect across entire site
-- [ ] Favicon updates with logo
+- [X] Company name can be changed
+- [X] Company logo can be uploaded
+- [X] Primary color can be changed
+- [X] Secondary color can be changed
+- [X] Changes reflect across entire site
+- [X] Favicon updates with logo
 
 ### System Settings
 
-- [ ] Exchange rate (USD to IQD) can be set
-- [ ] Timezone can be configured
-- [ ] Date format can be configured
-- [ ] Pagination limit can be set
+- [X] Exchange rate (USD to IQD) can be set
+- [X] Timezone can be configured
 
 ---
 
@@ -161,83 +159,83 @@ A comprehensive testing checklist for the Click P2P Procurement System.
 
 ### Language Switching
 
-- [ ] English language works correctly
-- [ ] Arabic language works correctly
-- [ ] Kurdish language works correctly
-- [ ] Language preference persists
+- [X] English language works correctly
+- [X] Arabic language works correctly
+- [X] Kurdish language works correctly
+- [X] Language preference persists
 
 ### RTL Support
 
-- [ ] Arabic displays right-to-left
-- [ ] Kurdish displays right-to-left
-- [ ] Sidebar moves to right side
-- [ ] Tables align correctly in RTL
-- [ ] Forms display correctly in RTL
+- [X] Arabic displays right-to-left
+- [X] Kurdish displays right-to-left
+- [X] Sidebar moves to right side
+- [X] Tables align correctly in RTL
+- [X] Forms display correctly in RTL
 
 ---
 
 ## 🌙 Dark Mode
 
-- [ ] Dark mode toggle works
-- [ ] Dark mode preference persists
-- [ ] All pages display correctly in dark mode
-- [ ] Charts display correctly in dark mode
-- [ ] No contrast issues in dark mode
+- [X] Dark mode toggle works
+- [X] Dark mode preference persists
+- [X] All pages display correctly in dark mode
+- [X] Charts display correctly in dark mode
+- [X] No contrast issues in dark mode
 
 ---
 
 ## 📱 Responsive Design
 
-- [ ] Dashboard displays correctly on mobile
-- [ ] Tables are horizontally scrollable on mobile
-- [ ] Mobile navigation menu works
-- [ ] Forms are usable on mobile
-- [ ] Modal dialogs work on mobile
+- [X] Dashboard displays correctly on mobile
+- [X] Tables are horizontally scrollable on mobile
+- [X] Mobile navigation menu works
+- [X] Forms are usable on mobile
+- [X] Modal dialogs work on mobile
 
 ---
 
 ## 🔔 Notifications
 
-- [ ] Toast notifications appear correctly
-- [ ] Success messages are green
-- [ ] Error messages are red
-- [ ] Notifications auto-dismiss
+- [X] Toast notifications appear correctly
+- [X] Success messages are green
+- [X] Error messages are red
+- [X] Notifications auto-dismiss
 
 ---
 
 ## 📧 Email Notifications (If Configured)
 
-- [ ] Employee receives email on request status change
-- [ ] Approvers receive email for pending items
-- [ ] Password reset email works
+- [X] Employee receives email on request status change
+- [X] Approvers receive email for pending items
+- [X] Password reset email works
 
 ---
 
 ## 🛡️ Security
 
-- [ ] CSRF protection is active
-- [ ] SQL injection prevented (try special characters)
-- [ ] XSS prevented (try script tags in inputs)
-- [ ] Unauthorized routes redirect to login
-- [ ] Rate limiting works on login attempts
+- [X] CSRF protection is active
+- [X] SQL injection prevented (try special characters)
+- [X] XSS prevented (try script tags in inputs)
+- [X] Unauthorized routes redirect to login
+- [X] Rate limiting works on login attempts
 
 ---
 
 ## 📋 Testing Notes
 
-| Tester Name | Date | Environment | Notes |
-| ----------- | ---- | ----------- | ----- |
-|             |      |             |       |
-|             |      |             |       |
+| Tester Name | Date     | Environment | Notes |
+| ----------- | -------- | ----------- | ----- |
+| Bawan abbas | 1/8/2026 |             |       |
+|             |          |             |       |
 
 ---
 
 ## ✅ Sign-Off
 
-- [ ] All critical features tested
-- [ ] No blocking bugs found
-- [ ] Ready for production deployment
+- [X] All critical features tested
+- [X] No blocking bugs found
+- [X] Ready for production deployment
 
-**Tested By:** _________________________
-**Date:** _________________________
+**Tested By:** _______Bawan abbas__________________
+**Date:** ___________1/8/2026______________
 **Signed:** _________________________

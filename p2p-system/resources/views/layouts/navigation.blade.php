@@ -31,16 +31,20 @@
                 @if(auth()->user()->can('is-procurement') || auth()->user()->can('is-admin'))
                 <x-nav-link-vertical :href="route('offers.index')" :active="request()->routeIs('offers.index') || request()->routeIs('offers.create')">
                     <span class="flex-1">{{ __('Needs Quotations') }}</span>
-                    {{-- We reuse the existing count variable for now if it tracks 'Approved for Purchase' --}}
-                    @if(isset($queueCounts['ready_to_buy']) && $queueCounts['ready_to_buy'] > 0)
+                    @if(isset($queueCounts['needs_quotations']) && $queueCounts['needs_quotations'] > 0)
                         <span class="inline-flex items-center justify-center px-2 py-0.5 ms-2 text-xs font-medium text-white bg-brand-green rounded-full">
-                            {{ $queueCounts['ready_to_buy'] }}
+                            {{ $queueCounts['needs_quotations'] }}
                         </span>
                     @endif
                 </x-nav-link-vertical>
 
                 <x-nav-link-vertical :href="route('offers.ready_to_buy')" :active="request()->routeIs('offers.ready_to_buy')">
                     <span class="flex-1">{{ __('Ready to Buy (Cash)') }}</span>
+                    @if(isset($queueCounts['ready_to_buy']) && $queueCounts['ready_to_buy'] > 0)
+                        <span class="inline-flex items-center justify-center px-2 py-0.5 ms-2 text-xs font-medium text-white bg-brand-green rounded-full">
+                            {{ $queueCounts['ready_to_buy'] }}
+                        </span>
+                    @endif
                 </x-nav-link-vertical>
                 @endif
 

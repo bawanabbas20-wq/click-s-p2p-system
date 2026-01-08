@@ -365,7 +365,7 @@ php artisan db:seed --class=AdminSeeder
 This creates:
 
 - **Email:** admin@click.com
-- **Password:**
+- **Password:ChangeMe123!**
 
 ⚠️ **IMPORTANT:** Change this password immediately after first login!
 
@@ -434,3 +434,55 @@ php artisan view:clear
 - [ ] Dark mode works
 - [ ] Language switching works
 - [ ] Charts display correctly
+
+---
+
+## ⚙️ Queue Worker Configuration (Crucial for Emails)
+
+The system uses a background queue to send emails and process heavy tasks. Without this, **emails will not be sent.**
+
+### Option A: Professional Server (Supervisor) - Recommended
+
+If you are using a VPS (DigitalOcean, AWS, etc.), use Supervisor to ensure the queue worker runs permanently.
+
+1. **Install Supervisor:**
+
+   ```bash
+   sudo apt-get install supervisor
+   ```
+2. **Create Config File:** `/etc/supervisor/conf.d/p2p-worker.conf`
+
+   ```ini
+   [program:p2p-worker]
+   process_name=%(program_name)s_%(process_num)02d
+   directory=/var/www/p2p-system
+   command=php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+   autostart=true
+   autorestart=true
+   user=www-data
+   numprocs=2
+   redirect_stderr=true
+   stdout_logfile=/var/www/p2p-system/storage/logs/worker.log
+   stopwaitsecs=3600
+   ```
+3. **Start Supervisor:**
+
+   ```bash
+   sudo supervisorctl reread
+   sudo supervisorctl update
+   sudo supervisorctl start p2p-worker:*
+   ```
+
+### Option B: Shared Hosting (Cron Job)
+
+If you are on shared hosting (cPanel, HostGator) and cannot install Supervisor, use a Cron Job.
+
+1. **Open Cron Jobs** in your hosting control panel.
+2. **Add New Cron Job**:
+   * **Frequency:** Once Per Minute (`* * * * *`)
+   * **Command:**
+     ```bash
+     /usr/local/bin/php /home/your_user/public_html/artisan queue:work --stop-when-empty
+     ```
+
+   *(Note: Check your hosting provider's documentation for the correct path to the PHP executable.)*

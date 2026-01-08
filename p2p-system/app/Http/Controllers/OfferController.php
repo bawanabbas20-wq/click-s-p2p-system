@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\PurchaseRequest;
 use App\Models\Offer;
 use App\Models\RequestLog;
-use App\Notifications\RequestReadyForPickupNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;

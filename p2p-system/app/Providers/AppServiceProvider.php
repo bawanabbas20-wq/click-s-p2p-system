@@ -92,19 +92,23 @@ class AppServiceProvider extends ServiceProvider
                 if ($user->can('is-approver')) {
                     $query = PurchaseRequest::where('user_id', '!=', $user->id);
                     if ($user->role === 'procurement') {
-                        $query->where('status', 'Pending Procurement');
+                        $query->whereIn('status', ['Pending Procurement', 'Ready to Buy']);
                     } elseif ($user->role === 'finance') {
-                        $query->where('status', 'Pending Finance');
+                        $query->whereIn('status', ['Pending Finance', 'Pending Final Payment', 'Pending Final Approval']);
                     } elseif ($user->role === 'manager') {
-                        $query->where('status', 'Pending Manager');
+                        $query->whereIn('status', ['Pending Manager', 'Pending Manager Approval']);
                     } elseif ($user->role === 'admin') {
-                        $query->whereIn('status', ['Pending Procurement', 'Pending Finance', 'Pending Manager']);
+                        $query->whereIn('status', ['Pending Procurement', 'Pending Finance', 'Pending Manager', 
+                                                   'Pending Manager Approval', 'Pending Final Payment', 'Pending Final Approval']);
                     }
                     $counts['approval'] = $query->count();
                 }
                 
                 if ($user->can('is-procurement') || $user->can('is-admin')) {
-                    $counts['ready_to_buy'] = PurchaseRequest::where('status', 'Approved for Purchase')->count();
+                    // Count for "Needs Quotations" (items waiting for offers)
+                    $counts['needs_quotations'] = PurchaseRequest::where('status', 'Approved for Purchase')->count();
+                    // Count for "Ready to Buy (Cash)" (items approved and cash is ready)
+                    $counts['ready_to_buy'] = PurchaseRequest::where('status', 'Ready to Buy')->count();
                 }
                 
                 $view->with('queueCounts', $counts)

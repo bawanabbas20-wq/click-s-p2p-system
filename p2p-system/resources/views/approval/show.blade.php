@@ -163,15 +163,28 @@
                         $procurementOffer = $purchaseRequest->offers->where('is_procurement_recommended', true)->first();
                         $financeOffer = $purchaseRequest->offers->where('is_finance_recommended', true)->first();
                         
-                        // Determine Threshold Value based on Procurement's choice
-                        $thresholdValue = 0;
+                        // Default to Estimated Price if no offer is chosen yet
+                        $priceToCheck = $purchaseRequest->estimated_price;
+                        $currencyToCheck = $purchaseRequest->estimated_currency;
+
+                        // Priority 1: Procurement Choice
                         if ($procurementOffer) {
-                            $thresholdValue = $procurementOffer->price;
-                            if ($procurementOffer->currency === 'USD') {
-                                 $exchangeRate = \App\Models\Setting::where('key', 'exchange_rate_usd_to_iqd')->value('value') ?? 1450;
-                                 $thresholdValue = $thresholdValue * $exchangeRate;
-                            }
+                            $priceToCheck = $procurementOffer->price;
+                            $currencyToCheck = $procurementOffer->currency;
+                        } 
+                        // Priority 2: Any Chosen Offer (fallback)
+                        elseif ($purchaseRequest->chosenOffer) {
+                            $priceToCheck = $purchaseRequest->chosenOffer->price;
+                            $currencyToCheck = $purchaseRequest->chosenOffer->currency;
                         }
+
+                        // Calculate Threshold
+                        $thresholdValue = $priceToCheck;
+                        if ($currencyToCheck === 'USD') {
+                                $exchangeRate = \App\Models\Setting::where('key', 'exchange_rate_usd_to_iqd')->value('value') ?? 1450;
+                                $thresholdValue = $thresholdValue * $exchangeRate;
+                        }
+                        
                         $isHighValue = $thresholdValue >= 100000;
                     @endphp
 
@@ -184,24 +197,108 @@
                             </div>
                         @endif
 
-                        {{-- Procurement Recommendation Display (For Finance/Manager) --}}
-                        @if($procurementOffer && in_array(auth()->user()->role, ['finance', 'manager', 'admin']))
-                            <div class="mb-2 bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-500 p-3">
-                                <h4 class="font-bold text-indigo-800 dark:text-indigo-300 text-sm">{{ __('Procurement Recommended:') }}</h4>
-                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ $procurementOffer->vendor_name }} - {{ number_format($procurementOffer->price, 2) }} {{ $procurementOffer->currency }}</p>
-                                @if($procurementOffer->procurement_recommendation_reason)
-                                    <p class="text-xs italic text-gray-600 dark:text-gray-400 mt-1">"{{ $procurementOffer->procurement_recommendation_reason }}"</p>
+                        {{-- UNIFIED MODERN OFFER CARDS (for Finance viewing on Pending Finance) --}}
+                        @php
+                            // Check if Finance can select (only for High Value on Pending Finance status)
+                            $canFinanceSelect = $isHighValue && $purchaseRequest->status === 'Pending Finance' && in_array(auth()->user()->role, ['finance', 'admin']);
+                            // Show unified offer cards only for Finance role (Manager has their own selection panel)
+                            $showUnifiedOfferCards = $purchaseRequest->status === 'Pending Finance' && in_array(auth()->user()->role, ['finance', 'admin']);
+                        @endphp
+                        @if($showUnifiedOfferCards && $purchaseRequest->offers->count() > 0)
+                            <div class="mb-5">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="font-bold text-gray-800 dark:text-gray-200 text-sm flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                        {{ __('Vendor Offers') }} <span class="text-xs font-normal text-gray-500">({{ $purchaseRequest->offers->count() }})</span>
+                                    </h4>
+                                </div>
+                                
+                                <div class="space-y-3 max-h-72 overflow-y-auto pr-1">
+                                    @foreach($purchaseRequest->offers as $offer)
+                                        @php
+                                            $isRecommended = $offer->is_procurement_recommended;
+                                            $isSelected = $isRecommended || $purchaseRequest->offers->count() == 1;
+                                        @endphp
+                                        <label class="group block p-4 rounded-xl border-2 transition-all duration-200
+                                            {{ $isRecommended ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300 dark:from-indigo-900/30 dark:to-purple-900/30 dark:border-indigo-600 shadow-md' : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700' }}
+                                            {{ $canFinanceSelect ? 'cursor-pointer hover:border-brand-green hover:shadow-lg' : '' }}">
+                                            <div class="flex items-start gap-4">
+                                                {{-- Radio Button (Only for High Value Selection) --}}
+                                                @if($canFinanceSelect)
+                                                    <div class="pt-1">
+                                                        <input type="radio" name="finance_selected_offer_id" value="{{ $offer->id }}" {{ $isSelected ? 'checked' : '' }} 
+                                                            class="form-radio h-5 w-5 text-brand-green border-gray-300 focus:ring-brand-green focus:ring-offset-0 transition-all">
+                                                    </div>
+                                                @endif
+                                                
+                                                {{-- Offer Content --}}
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                                                        <p class="text-base font-bold text-gray-900 dark:text-gray-100 truncate">{{ $offer->vendor_name }}</p>
+                                                        <p class="text-lg font-extrabold text-gray-800 dark:text-gray-200">
+                                                            {{ $offer->currency === 'USD' ? '$' : '' }}{{ number_format($offer->price, 2) }} {{ $offer->currency === 'IQD' ? 'IQD' : '' }}
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    {{-- Badges Row --}}
+                                                    <div class="flex flex-wrap items-center gap-2 mt-2">
+                                                        @if($isRecommended)
+                                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-800 dark:text-indigo-200 shadow-sm">
+                                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                                {{ __('Recommended') }}
+                                                            </span>
+                                                        @endif
+                                                        @if($offer->quotation_file_path)
+                                                            <a href="{{ Storage::url($offer->quotation_file_path) }}" target="_blank" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 transition-colors">
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                                {{ __('View Quote') }}
+                                                            </a>
+                                                        @endif
+                                                    </div>
+                                                    
+                                                    {{-- Recommendation Reason --}}
+                                                    @if($isRecommended && $offer->procurement_recommendation_reason)
+                                                        <p class="mt-2 text-xs italic text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/50 p-2 rounded-lg border border-indigo-100 dark:border-indigo-800">
+                                                            "{{ $offer->procurement_recommendation_reason }}"
+                                                        </p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                
+                                {{-- High Value Reason Input (Finance only on Pending Finance) --}}
+                                @if($canFinanceSelect)
+                                    <div class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+                                        <label class="text-xs font-medium text-amber-800 dark:text-amber-300 mb-1 block">{{ __('Your recommendation reason (optional):') }}</label>
+                                        <textarea name="finance_reason" placeholder="{{ __('Why did you select this offer?') }}" rows="2" 
+                                            class="w-full text-sm rounded-lg border-amber-200 dark:border-amber-700 dark:bg-gray-800 dark:text-gray-300 focus:ring-amber-400 focus:border-amber-400 placeholder-gray-400"></textarea>
+                                    </div>
                                 @endif
                             </div>
+                        @else
+                            {{-- Warning if no offers found at all --}}
+                            @if(in_array(auth()->user()->role, ['finance', 'manager', 'admin']) && $purchaseRequest->offers->count() === 0)
+                                <div class="mb-4 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 p-3 rounded-r-lg">
+                                    <p class="text-sm text-yellow-800 dark:text-yellow-300 flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                        {{ __('No offers attached to this request.') }}
+                                    </p>
+                                </div>
+                            @endif
                         @endif
 
                         {{-- Finance Recommendation Display (For Manager) --}}
                         @if($financeOffer && in_array(auth()->user()->role, ['manager', 'admin']))
-                             <div class="mb-2 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 p-3">
-                                <h4 class="font-bold text-green-800 dark:text-green-300 text-sm">{{ __('Finance Recommended:') }}</h4>
-                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ $financeOffer->vendor_name }} - {{ number_format($financeOffer->price, 2) }} {{ $financeOffer->currency }}</p>
+                             <div class="mb-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-l-4 border-green-500 p-4 rounded-r-xl shadow-sm">
+                                <h4 class="font-bold text-green-800 dark:text-green-300 text-sm flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                    {{ __('Finance Recommended:') }}
+                                </h4>
+                                <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">{{ $financeOffer->vendor_name }} - {{ number_format($financeOffer->price, 2) }} {{ $financeOffer->currency }}</p>
                                 @if($financeOffer->finance_recommendation_reason)
-                                    <p class="text-xs italic text-gray-600 dark:text-gray-400 mt-1">"{{ $financeOffer->finance_recommendation_reason }}"</p>
+                                    <p class="text-xs italic text-green-600 dark:text-green-400 mt-1 bg-green-100/50 dark:bg-green-900/30 p-2 rounded">"{{ $financeOffer->finance_recommendation_reason }}"</p>
                                 @endif
                             </div>
                         @endif
@@ -209,22 +306,12 @@
                         {{-- Finance Actions --}}
                         @if($purchaseRequest->status === 'Pending Finance' && (auth()->user()->role === 'finance' || auth()->user()->role === 'admin'))
                              @if($isHighValue)
-                                <div class="mb-4 border border-red-200 bg-red-50 dark:bg-red-900/20 p-3 rounded">
-                                    <p class="text-sm text-red-700 dark:text-red-300 font-bold mb-2">{{ __('High Value (>= 100k). Review offers & Escalate:') }}</p>
-                                    <div class="mt-2 space-y-2 max-h-64 overflow-y-auto">
-                                        @foreach($purchaseRequest->offers as $offer)
-                                            <label class="flex items-center space-x-3 p-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600">
-                                                <input type="radio" name="finance_selected_offer_id" value="{{ $offer->id }}" {{ $offer->is_procurement_recommended ? 'checked' : '' }} class="form-radio h-4 w-4 text-brand-green border-gray-300 focus:ring-brand-green">
-                                                <div class="text-sm flex-1">
-                                                    <div class="font-semibold text-gray-800 dark:text-gray-200">{{ $offer->vendor_name }}</div>
-                                                    <div class="text-gray-500 dark:text-gray-400">{{ number_format($offer->price, 2) }} {{ $offer->currency }}</div>
-                                                </div>
-                                            </label>
-                                        @endforeach
-                                    </div>
-                                    <textarea name="finance_reason" placeholder="Reason for choice..." rows="2" class="w-full mt-3 text-sm rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:ring-brand-green focus:border-brand-green"></textarea>
-                                </div>
-                                <button type="submit" name="action" value="finance_approve_high" class="w-full justify-center px-4 py-2 bg-brand-blue text-white text-sm font-medium rounded-lg hover:bg-opacity-80">{{ __('Escalate to Manager') }}</button>
+                                {{-- High Value: Escalate Button --}}
+                                <button type="submit" name="action" value="finance_approve_high" 
+                                    class="w-full flex items-center justify-center gap-2 px-5 py-3 bg-brand-blue border border-transparent text-white text-sm font-semibold rounded-xl hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/></svg>
+                                    {{ __('Escalate to Manager') }}
+                                </button>
                              @else
                                 <!-- Low Value: Modern Cash Confirmation Toggle -->
                                 <div class="mb-5 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
@@ -260,7 +347,7 @@
 
                              <!-- Ghost-style Reject Buttons -->
                              <div class="grid grid-cols-2 gap-3 mt-4">
-                                <button type="submit" name="action" value="reject_quote" 
+                                <button type="submit" name="action" value="reject_quote" formnovalidate
                                     class="flex items-center justify-center gap-2 px-4 py-2.5 bg-transparent border-2 border-amber-400 text-amber-600 dark:text-amber-400 text-sm font-semibold rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 focus:outline-none focus:ring-4 focus:ring-amber-400/30 transition-all duration-200" 
                                     onclick="return confirm('{{ __('Reject quote and send back to Procurement?') }}');">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,7 +355,7 @@
                                     </svg>
                                     {{ __('Reject Quote') }}
                                 </button>
-                                <button type="submit" name="action" value="deny" 
+                                <button type="submit" name="action" value="deny" formnovalidate
                                     class="flex items-center justify-center gap-2 px-4 py-2.5 bg-transparent border-2 border-red-400 text-red-600 dark:text-red-400 text-sm font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-4 focus:ring-red-400/30 transition-all duration-200" 
                                     onclick="return confirm('{{ __('Cancel entire request?') }}');">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,27 +367,60 @@
 
                         {{-- Manager Actions --}}
                         @elseif(in_array($purchaseRequest->status, ['Pending Manager', 'Pending Manager Approval']) && (auth()->user()->role === 'manager' || auth()->user()->role === 'admin'))
-                             <!-- Modern Offer Selection Panel -->
-                             <div class="mb-5 p-4 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl">
-                                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">{{ __('Select Final Offer:') }}</p>
-                                <div class="space-y-2 max-h-64 overflow-y-auto">
+                             {{-- Manager Offer Selection Panel --}}
+                             <div class="mb-5">
+                                <h4 class="font-bold text-gray-800 dark:text-gray-200 text-sm flex items-center gap-2 mb-3">
+                                    <svg class="w-4 h-4 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    {{ __('Select Final Offer') }}
+                                </h4>
+                                <div class="space-y-3">
                                     @foreach($purchaseRequest->offers as $offer)
-                                        <label class="flex items-center space-x-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 cursor-pointer hover:border-brand-green hover:bg-green-50/50 dark:hover:bg-green-900/20 transition-all duration-200">
-                                            <input type="radio" name="manager_selected_offer_id" value="{{ $offer->id }}" {{ $offer->is_finance_recommended ? 'checked' : ($offer->is_procurement_recommended && !$financeOffer ? 'checked' : '') }} class="form-radio h-4 w-4 text-brand-green border-gray-300 focus:ring-brand-green">
-                                            <div class="text-sm flex-1 grid grid-cols-1 sm:grid-cols-2 gap-1">
-                                                <div>
-                                                    <div class="font-semibold text-gray-800 dark:text-gray-200">{{ $offer->vendor_name }}</div>
-                                                    <div class="text-gray-500 dark:text-gray-400">{{ number_format($offer->price, 2) }} {{ $offer->currency }}</div>
+                                        @php
+                                            $isFinanceRec = $offer->is_finance_recommended;
+                                            $isProcRec = $offer->is_procurement_recommended;
+                                            $shouldBeChecked = $isFinanceRec || (!$financeOffer && $isProcRec) || $purchaseRequest->offers->count() == 1;
+                                        @endphp
+                                        <label class="group block p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer
+                                            {{ $isFinanceRec ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300 dark:from-green-900/30 dark:to-emerald-900/30 dark:border-green-600 shadow-md' : ($isProcRec ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300 dark:from-indigo-900/30 dark:to-purple-900/30 dark:border-indigo-600' : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700') }}
+                                            hover:border-brand-green hover:shadow-lg">
+                                            <div class="flex items-start gap-4">
+                                                <div class="pt-1">
+                                                    <input type="radio" name="manager_selected_offer_id" value="{{ $offer->id }}" {{ $shouldBeChecked ? 'checked' : '' }} 
+                                                        class="form-radio h-5 w-5 text-brand-green border-gray-300 focus:ring-brand-green focus:ring-offset-0 transition-all">
                                                 </div>
-                                                <div class="flex items-center space-x-1">
-                                                    @if($offer->is_procurement_recommended) <span class="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">Procurement</span> @endif
-                                                    @if($offer->is_finance_recommended) <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Finance</span> @endif
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                                                        <p class="text-base font-bold text-gray-900 dark:text-gray-100 truncate">{{ $offer->vendor_name }}</p>
+                                                        <p class="text-lg font-extrabold text-gray-800 dark:text-gray-200">
+                                                            {{ $offer->currency === 'USD' ? '$' : '' }}{{ number_format($offer->price, 2) }} {{ $offer->currency === 'IQD' ? 'IQD' : '' }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="flex flex-wrap items-center gap-2 mt-2">
+                                                        @if($isFinanceRec)
+                                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200 shadow-sm">
+                                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                                {{ __('Finance') }}
+                                                            </span>
+                                                        @endif
+                                                        @if($isProcRec)
+                                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-800 dark:text-indigo-200 shadow-sm">
+                                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                                {{ __('Procurement') }}
+                                                            </span>
+                                                        @endif
+                                                        @if($offer->quotation_file_path)
+                                                            <a href="{{ Storage::url($offer->quotation_file_path) }}" target="_blank" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 transition-colors">
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                                {{ __('View Quote') }}
+                                                            </a>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </div>
                                         </label>
                                     @endforeach
                                 </div>
-                                <textarea name="manager_reason" placeholder="{{ __('Final approval notes...') }}" rows="2" 
+                                <textarea name="manager_reason" placeholder="{{ __('Final approval notes (optional)...') }}" rows="2" 
                                     class="w-full mt-4 text-sm rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green transition-all duration-200 placeholder-gray-400"></textarea>
                              </div>
                              
@@ -337,11 +457,32 @@
                         @else
                             {{-- View Selected (Read Only) or Cash Ready --}}
                              @if($purchaseRequest->status === 'Pending Final Payment' || $purchaseRequest->status === 'Pending Final Approval' || $purchaseRequest->status === 'Ready to Buy')
-                                 <div class="w-full mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ __('Selected Quotation') }}</h4>
-                                    @if($purchaseRequest->chosenOffer)
-                                        <p class="text-sm text-gray-700 dark:text-gray-300"><strong>Vendor:</strong> {{ $purchaseRequest->chosenOffer->vendor_name }}</p>
-                                        <p class="text-sm text-gray-700 dark:text-gray-300"><strong>Price:</strong> {{ number_format($purchaseRequest->chosenOffer->price, 2) }} {{ $purchaseRequest->chosenOffer->currency }}</p>
+                                 @php
+                                     // Find the best offer to display: chosenOffer > financeRecommended > procurementRecommended
+                                     $displayOffer = $purchaseRequest->chosenOffer 
+                                         ?? $purchaseRequest->offers->where('is_finance_recommended', true)->first()
+                                         ?? $purchaseRequest->offers->where('is_procurement_recommended', true)->first();
+                                 @endphp
+                                 <div class="w-full mb-4 p-5 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-700 shadow-sm">
+                                    <h4 class="font-semibold text-green-800 dark:text-green-300 mb-3 flex items-center gap-2">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                        {{ __('Approved Quotation') }}
+                                    </h4>
+                                    @if($displayOffer)
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ $displayOffer->vendor_name }}</p>
+                                                <p class="text-xl font-extrabold text-green-600 dark:text-green-400">
+                                                    {{ $displayOffer->currency === 'USD' ? '$' : '' }}{{ number_format($displayOffer->price, 2) }} {{ $displayOffer->currency === 'IQD' ? 'IQD' : '' }}
+                                                </p>
+                                            </div>
+                                            @if($displayOffer->quotation_file_path)
+                                                <a href="{{ Storage::url($displayOffer->quotation_file_path) }}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    {{ __('View Quote') }}
+                                                </a>
+                                            @endif
+                                        </div>
                                     @else
                                         <p class="text-sm text-red-500">{{ __('No offer selected.') }}</p>
                                     @endif
@@ -349,7 +490,9 @@
                                 
                                 {{-- Cash Ready Action --}}
                                 @if($purchaseRequest->status === 'Pending Final Payment' || $purchaseRequest->status === 'Pending Final Approval')
-                                    <button type="submit" name="action" value="cash_ready" class="w-full justify-center px-4 py-2 bg-brand-green text-white text-sm font-medium rounded-lg hover:bg-opacity-80">
+                                    <button type="submit" name="action" value="cash_ready" 
+                                        class="w-full flex items-center justify-center gap-2 px-5 py-3 bg-brand-green border border-transparent text-white text-sm font-semibold rounded-xl hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150 shadow-lg">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                         {{ __('Cash is Ready - Notify Procurement') }}
                                     </button>
                                 @endif
