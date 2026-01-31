@@ -257,6 +257,22 @@ class ApprovalController extends Controller
                         // Let's comment strictly on the new actions.
                     } elseif ($action === 'cash_ready') {
                         // Old flow for "Pending Final Payment"
+                        
+                        // SAFETY: Ensure an offer is chosen before moving to Ready to Buy
+                        $hasChosen = $purchaseRequest->offers()->where('is_chosen', true)->exists();
+                        if (!$hasChosen) {
+                            $bestOffer = $purchaseRequest->offers()
+                                ->orderBy('is_finance_recommended', 'desc')
+                                ->orderBy('is_procurement_recommended', 'desc')
+                                ->orderBy('price', 'asc')
+                                ->first();
+
+                            if ($bestOffer) {
+                                $bestOffer->is_chosen = true;
+                                $bestOffer->save();
+                            }
+                        }
+
                         $newStatus = 'Ready to Buy';
                         $procurementUsers = User::where('role', 'procurement')->get();
                         Notification::send($procurementUsers, new NewRequestForApprovalNotification($purchaseRequest, 'Cash Ready - Ready to Buy'));
@@ -298,8 +314,26 @@ class ApprovalController extends Controller
                 case 'admin':
                     // Admin overrides
                     if ($action === 'approve') {
-                         // Intelligent Admin Approve: If it was pending finance/manager, approve it fully to cash ready?
-                         // For now, let's treat it like a Finance Approval to be safe, or just force to Pending Final Payment.
+                         // Intelligent Admin Approve: Ensure an offer is selected
+                         $hasChosen = $purchaseRequest->offers()->where('is_chosen', true)->exists();
+                         
+                         if (!$hasChosen) {
+                             // Auto-select the best available offer
+                             $bestOffer = $purchaseRequest->offers()
+                                         ->orderBy('is_finance_recommended', 'desc')
+                                         ->orderBy('is_procurement_recommended', 'desc')
+                                         ->orderBy('price', 'asc')
+                                         ->first();
+                             
+                             if ($bestOffer) {
+                                  $bestOffer->is_chosen = true;
+                                  $bestOffer->save();
+                             } else {
+                                  return back()->with('error', 'Cannot approve: No offers exist for this request.');
+                             }
+                         }
+
+                         // Treat as fully approved -> Pending Final Payment (Cash Ready check)
                          $newStatus = 'Pending Final Payment';
                     }
                     if ($action === 'reject_quote') $newStatus = 'Approved for Purchase';
