@@ -51,9 +51,6 @@ class PurchaseRequestController extends Controller
 
         // 1. Determine the correct initial status
         $newStatus = 'Pending Procurement';
-        if ($user->role === 'procurement') {
-            $newStatus = 'Pending Finance'; // Auto-escalate
-        }
 
         // 2. Create the purchase request
         $purchaseRequest = PurchaseRequest::create([
@@ -69,10 +66,7 @@ class PurchaseRequestController extends Controller
 
         // 3. Create the initial log entry
         $logComment = 'Request submitted by employee.';
-        if ($newStatus === 'Pending Finance') {
-            $logComment = 'Auto-escalated: Requester is in Procurement.';
-        }
-
+        
         RequestLog::create([
             'purchase_request_id' => $purchaseRequest->id,
             'user_id' => $user->id,
@@ -84,15 +78,10 @@ class PurchaseRequestController extends Controller
         // 4. Notify the correct group
         $adminUsers = User::where('role', 'admin')->get(); // Get Admins
 
-        if ($newStatus === 'Pending Finance') {
-            $financeUsers = User::where('role', 'finance')->get();
-            Notification::send($financeUsers, new NewRequestForApprovalNotification($purchaseRequest, 'Finance'));
-            Notification::send($adminUsers, new NewRequestForApprovalNotification($purchaseRequest, 'Finance (for Admin)')); // Notify Admin
-        } else {
-            $procurementUsers = User::where('role', 'procurement')->get();
-            Notification::send($procurementUsers, new NewRequestForApprovalNotification($purchaseRequest, 'Procurement'));
-            Notification::send($adminUsers, new NewRequestForApprovalNotification($purchaseRequest, 'Procurement (for Admin)')); // Notify Admin
-        }
+        // Since we are always starting at Pending Procurement:
+        $procurementUsers = User::where('role', 'procurement')->get();
+        Notification::send($procurementUsers, new NewRequestForApprovalNotification($purchaseRequest, 'Procurement'));
+        Notification::send($adminUsers, new NewRequestForApprovalNotification($purchaseRequest, 'Procurement (for Admin)')); // Notify Admin
 
         // 5. Notify the requester that their request was received
         $user->notify(new \App\Notifications\RequestSubmittedNotification($purchaseRequest));

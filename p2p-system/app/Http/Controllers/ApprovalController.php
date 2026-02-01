@@ -250,11 +250,7 @@ class ApprovalController extends Controller
                         Notification::send($procurementUsers, new NewRequestForApprovalNotification($purchaseRequest, __('Cash Ready - Ready to Buy')));
 
                     } elseif ($action === 'approve') {
-                        // BACKWARD COMPATIBILITY or Default fallthrough
-                        // We shouldn't hit this if the UI is correct, but let's keep basic logic or just error.
-                        // Let's assume 'approve' maps to 'finance_approve_low' behavior if not specified? 
-                        // Or just keep the old valid logic for safety?
-                        // Let's comment strictly on the new actions.
+                        // Default fallthrough or legacy support
                     } elseif ($action === 'cash_ready') {
                         // Old flow for "Pending Final Payment"
                         

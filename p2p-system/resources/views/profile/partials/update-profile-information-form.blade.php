@@ -45,11 +45,22 @@
                     <!-- Hidden File Input -->
                     <input id="avatar" name="avatar" type="file" class="hidden" accept="image/*" @change="handleFileSelect" x-ref="fileInput">
                     
-                    <!-- Upload Button -->
-                    <button type="button" @click="$refs.fileInput.click()" 
-                            class="px-4 py-2 bg-brand-green/10 hover:bg-brand-green/20 text-brand-green rounded-lg font-medium text-sm transition-colors">
-                        {{ __('Change Avatar') }}
-                    </button>
+                    <!-- Buttons Container -->
+                    <div class="flex gap-2">
+                        <!-- Upload Button -->
+                        <button type="button" @click="$refs.fileInput.click()" 
+                                class="px-4 py-2 bg-brand-green/10 hover:bg-brand-green/20 text-brand-green rounded-lg font-medium text-sm transition-colors">
+                            {{ __('Change Avatar') }}
+                        </button>
+                        
+                        <!-- Remove Button (Only if user has avatar) -->
+                        @if ($user->avatar)
+                            <button type="button" form="remove-avatar-form"
+                                    class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium text-sm transition-colors">
+                                {{ __('Remove') }}
+                            </button>
+                        @endif
+                    </div>
                     
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400" x-show="!fileName">
                         {{ __('JPG, PNG up to 2MB') }}
@@ -159,6 +170,12 @@
             </div>
         </div>
 
+    </form>
+
+    <!-- Hidden Remove Avatar Form -->
+    <form id="remove-avatar-form" method="POST" action="{{ route('profile.avatar.destroy') }}">
+        @csrf
+        @method('DELETE')
     </form>
 
     <!-- Cropper.js Script -->
