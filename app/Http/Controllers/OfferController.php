@@ -212,7 +212,7 @@ class OfferController extends Controller
     /**
      * Display the Finance Review page for a request.
      */
-    public function financeReview(PurchaseRequest $purchaseRequest): View
+    public function financeReview(PurchaseRequest $purchaseRequest): View|RedirectResponse
     {
         if (!auth()->user()->can('is-finance') && !auth()->user()->can('is-admin')) {
              abort(403);
@@ -324,7 +324,7 @@ class OfferController extends Controller
     /**
      * Display the Manager Review page.
      */
-    public function managerReview(PurchaseRequest $purchaseRequest): View
+    public function managerReview(PurchaseRequest $purchaseRequest): View|RedirectResponse
     {
         if (!auth()->user()->can('is-manager') && !auth()->user()->can('is-admin')) {
              abort(403);
